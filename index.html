@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+</head>
+<body>
+
+
+<canvas id="canvas" style="border:1px solid #ddd;" width="600" height ="600"></canvas>
+
+
+
+
+
+<script type="text/javascript">
+
+var canvas = document.getElementById("canvas")
+var ctx = canvas.getContext("2d")
+
+var player ={x:canvas.width/2,y:canvas.height/2,r:20,tempA: 0, a: 0,speed: 0,vx : 0, vy: 0,health:100}
+
+var particle =[]
+var fire = []
+var enemy= []
+var rocket = []
+document.addEventListener("keyup", function (event){
+console.log(event)
+if(event.key === 'ArrowLeft'){
+    player.tempA -= .5
+}else if(event.key === 'ArrowRight'){
+    player.tempA += .5
+}
+if(event.key === 'ArrowUp'){
+    player.speed = 3
+}
+if(event.key === 'ArrowDown'){
+    player.speed -= 1
+}
+if(event.key === ' '){
+    var f = new Fire(player.x , player.y , player.a)
+    fire.push(f)
+}
+if(event.key === 'Enter'){
+    var r = new Rocket(player.x , player.y)
+    rocket.push(r)
+}
+},false)
+
+function draw(){
+    ctx.save()
+    ctx.beginPath()
+    ctx.translate(player.x,player.y)
+    ctx.rotate(player.a)
+    ctx.moveTo(-10,0)
+    ctx.lineTo(-20,-20)
+    ctx.lineTo(20,0)
+    ctx.lineTo(-20,20)
+    ctx.lineTo(-10,0)
+    ctx.stroke()
+    ctx.closePath()
+    ctx.restore()
+}
+
+function update(){
+    if(player.x - player.r > canvas.width ){
+        player.x = 0
+    }
+    if(player.x + player.r < 0 ){
+        player.x = canvas.width
+    }
+
+    if(player.y - player.r > canvas.height ){
+        player.y = 0
+    }
+    if(player.y + player.r < 0 ){
+        player.y = canvas.height
+    }
+
+
+if(player.a < player.tempA){
+    player.a += 0.045
+}
+if(player.a > player.tempA){
+    player.a -= 0.045
+}
+if(player.speed > 1){
+    player.speed -= 0.06
+}
+
+
+player.vx = player.speed * Math.cos(player.a)
+player.vy = player.speed * Math.sin(player.a)
+
+player.x += player.vx
+player.y += player.vy
+}
+
+//fire
+class Fire{
+constructor (x,y,a){
+this.x =player.x
+this.y =player.y
+this.r =5
+this.speed = 5;
+this.a = a
+this.vx = this.speed * Math.cos(this.a)
+this.vy = this.speed * Math.sin(this.a)
+}
+
+draw(){
+ctx.beginPath()
+ctx.arc(this.x,this.y,this.r,Math.PI*2,false)
+ctx.fillStyle = 'black'
+ctx.fill()
+ctx.closePath()
+}
+
+update (){
+this.x+=this.vx;
+this.y+=this.vy;
+
+}
+}
+
+
+
+//enemy
+
+class Enemy {
+constructor (x,y,rand){
+this.x = rand > 0.5 ? 0 : Math.random()*400;
+this.y = rand > 0.5 ? Math.random()*400 : 0;
+this.r = Math.random()*(60-20)+20
+this.tempR = this.r
+this.speed = 0.6;
+this.a = Math.atan2((y-this.y),(x-this.x))
+this.vx = this.speed * Math.cos(this.a)
+this.vy = this.speed * Math.sin(this.a)
+this.color = "red";
+}
+
+
+
+
+draw(){
+ctx.beginPath()
+ctx.arc(this.x,this.y,this.r,Math.PI*2,false)
+ctx.fillStyle = this.color
+ctx.fill()
+ctx.closePath()
+}
+
+update (){
+this.x+=this.vx;
+this.y+=this.vy;
+if(this.r > this.tempR ){
+    this.r -= 1;
+}
+
+
+}
+
+}
+
+//particle
+class Particle {
+constructor (x,y){
+this.x = x;
+this.y = y//rand > 0.5 ? Math.random()*400 : 0;
+this.r = Math.random()*(2-1)+1
+this.f = 0.03
+this.speed = Math.random()*10
+this.alpha = 1
+
+this.vx = (Math.random()-0.5)
+this.vy = (Math.random()-0.5)
+}
+
+
+
+
+draw(){
+ctx.save()
+ctx.globalAlpha = this.alpha
+ctx.beginPath()
+ctx.arc(this.x,this.y,this.r,Math.PI*2,false)
+ctx.fillStyle = "black"
+ctx.fill()
+ctx.closePath()
+ctx.restore()
+}
+
+update (){
+this.x+=this.speed * this.vx;
+this.y+=this.speed * this.vy;
+this.speed -= 0.09
+this.alpha -=0.9
+
+
+}
+
+}
+
+//updating the target
+var target = {x: 150,y: 150}
+function updateTarget(){
+    if(enemy.length > 0){
+        try{
+        target.x = enemy[enemy.length -1].x
+        target.y = enemy[enemy.length -1].y
+        }catch(e){
+            target = {x: 150,y: 150}    
+        }
+    }else{
+        target = {x: 150,y: 150}
+    }
+    console.log(target)
+}
+//Rocket
+
+class Rocket{
+    constructor(x,y){
+        this.x = x
+        this.y = y
+        this.r = 10
+        this.a = Math.PI/2
+        this.tempA = this.a
+        this.vx = 0
+        this.vy = 0
+        this.speed = 4.5
+    }
+
+    draw(){
+        ctx.save()
+        ctx.beginPath()
+        ctx.translate(this.x , this.y)
+        ctx.rotate(this.a)
+        ctx.moveTo(-10,5)
+        ctx.lineTo(10,5)
+        ctx.lineTo(15,0)
+        ctx.lineTo(10,-5)
+        ctx.lineTo(-10,-5)
+        ctx.lineTo(-10,10)
+        ctx.lineTo(-15,10)
+        ctx.lineTo(-15,-10)
+        ctx.lineTo(-10,-10)
+        ctx.lineTo(-10,-5)
+        ctx.stroke()
+        ctx.closePath()
+        ctx.restore()
+    }
+
+    update(){
+        if(this.a < this.tempA ){
+            this.a +=0.03
+        }
+        
+        if(this.a > this.tempA ){
+            this.a -=0.03
+        }
+        this.tempA = Math.atan2(target.y-this.y,target.x-this.x)
+        this.vx = this.speed * Math.cos(this.a)
+        this.vy = this.speed * Math.sin(this.a)
+        this.x += this.vx
+        this.y +=this.vy
+
+
+        if(this.x - this.r > canvas.width ){
+        this.x = 0
+        }
+        if(this.x + this.r < 0 ){
+            this.x = canvas.width
+        }
+
+        if(this.y - this.r > canvas.height ){
+            this.y = 0
+        }
+        if(this.y + this.r < 0 ){
+            this.y = canvas.height
+        }
+    }
+}
+
+
+//collision
+function collision(ob1,ob2){
+var dx = Math.pow(ob1.x-ob2.x,2)
+var dy = Math.pow(ob1.y-ob2.y,2)
+var dis = Math.sqrt(dx+dy)
+if(dis-(ob1.r+ob2.r) <=0){
+return true
+}
+return false
+}
+
+//interval
+
+var t = 0
+setInterval (function (){
+ctx.clearRect(0,0,600,600)
+draw()
+update()
+
+//rocket
+for(var i in rocket){
+    
+updateTarget()
+rocket[i].draw()
+rocket[i].update()
+}
+
+
+for(var r in rocket){
+    for(var e in enemy){
+        if(collision(rocket[r], enemy[e])){
+            if(enemy[e].r > 20){
+                enemy[e].tempR -=20
+            }else{
+            for (var i =0;i<enemy[e].r;i++){
+                var p = new Particle(enemy[e].x, enemy[e].y)
+                particle.push(p)
+            }
+            delete enemy[e]
+            updateTarget()
+        }
+
+            for (var i =0;i< 20;i++){
+                var p = new Particle(rocket[r].x, rocket[r].y)
+                particle.push(p)
+            }
+
+            
+            delete rocket[r]
+        }
+        }
+    }
+
+//fire shots updating
+
+for(var i in fire){
+    fire[i].draw()
+    fire[i].update()
+}
+
+//enemy updating
+
+for(var i in enemy){
+    enemy[i].draw()
+    enemy[i].update()
+}
+
+//enemy particle
+
+for(var i in particle){
+    
+    if(particle[i].speed <= 0){
+        delete particle[i]
+        continue;
+    }
+    particle[i].draw()
+    particle[i].update()
+    
+}
+//checking the enemy collision
+for(var e in enemy){
+    if(enemy[e].r < 5){
+        delete enemy[e]
+        updateTarget()
+        continue
+    }
+    for(var f in fire){
+        if(collision(fire[f], enemy[e])){
+            console.log("Collide")
+            if(enemy[e].r > 20){
+                enemy[e].tempR -=20
+            }else{
+            for (var i =0;i<enemy[e].r;i++){
+                var p = new Particle(enemy[e].x, enemy[e].y)
+                particle.push(p)
+            }
+            delete enemy[e]
+            updateTarget()
+        }
+
+            for (var i =0;i< 20;i++){
+                var p = new Particle(fire[f].x, fire[f].y)
+                particle.push(p)
+            }
+
+            
+            delete fire[f]
+        }
+    }
+}
+
+
+//generate enemy
+if(t %120 === 0){
+    var e = new Enemy(player.x , player.y , Math.random());
+    enemy.push(e)
+}
+if(t%100 === 0){
+    var r = new Rocket(player.x , player.y)
+    rocket.push(r)
+}
+t++
+},10)
+</script>
+</body>
+</html>
